@@ -5,8 +5,8 @@
     "output": "${OUTPUT_ROOT}"
   },
   "path_templates": {
-    "raw_patch": "${DATA_ROOT}/{dataset}/{patch}_raw.nii.gz",
-    "target_mask": "${DATA_ROOT}/{dataset}/{patch}_gt.nii.gz",
+    "raw_patch": "${DATA_ROOT}/derivatives/micr/sub-{subject}/sub-{subject}_stain-{stain}_seg-{seg}_desc-raw_SPIM.nii.gz",
+    "target_mask": "${DATA_ROOT}/derivatives/micr/sub-{subject}/sub-{subject}_stain-{stain}_seg-{seg}_desc-gt_SPIM.nii.gz",
     "prediction_dir": "${OUTPUT_ROOT}/predictions/{method}/{dataset}/{patch}",
     "prediction_score": "${OUTPUT_ROOT}/predictions/{method}/{dataset}/{patch}/{patch}_pred_prob.nii.gz",
     "prediction_mask": "${OUTPUT_ROOT}/predictions/{method}/{dataset}/{patch}/{patch}_pred.nii.gz",
@@ -31,84 +31,120 @@
       "dataset": "human_NEFH",
       "patch": "Human_NEFH_GM",
       "domain": "human",
-      "split": "calibration"
+      "split": "calibration",
+      "subject": "PH1",
+      "stain": "NEFH",
+      "seg": "GM"
     },
     {
       "id": "human_NEFH/Human_NEFH_WM",
       "dataset": "human_NEFH",
       "patch": "Human_NEFH_WM",
       "domain": "human",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PH1",
+      "stain": "NEFH",
+      "seg": "WM"
     },
     {
       "id": "human_NEFH/Human_NEFH_transition",
       "dataset": "human_NEFH",
       "patch": "Human_NEFH_transition",
       "domain": "human",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PH1",
+      "stain": "NEFH",
+      "seg": "White+Gray+Transition"
     },
     {
       "id": "human_NEFL/human_NEFL_GM_1",
       "dataset": "human_NEFL",
       "patch": "human_NEFL_GM_1",
       "domain": "human",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PH1",
+      "stain": "NEFL",
+      "seg": "GM1"
     },
     {
       "id": "human_NEFL/human_NEFL_GM_2",
       "dataset": "human_NEFL",
       "patch": "human_NEFL_GM_2",
       "domain": "human",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PH1",
+      "stain": "NEFL",
+      "seg": "GM2"
     },
     {
       "id": "human_NEFL/human_NEFL_White-Gray_Transition",
       "dataset": "human_NEFL",
       "patch": "human_NEFL_White-Gray_Transition",
       "domain": "human",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PH1",
+      "stain": "NEFL",
+      "seg": "White+Gray+Transition"
     },
     {
       "id": "macaque_NEFH/macaque_NEFH_GM",
       "dataset": "macaque_NEFH",
       "patch": "macaque_NEFH_GM",
       "domain": "macaque",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PM1",
+      "stain": "NEFH",
+      "seg": "GM"
     },
     {
       "id": "macaque_NEFH/macaque_NEFH_WM",
       "dataset": "macaque_NEFH",
       "patch": "macaque_NEFH_WM",
       "domain": "macaque",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PM1",
+      "stain": "NEFH",
+      "seg": "WM"
     },
     {
       "id": "macaque_NEFH/macaque_NEFH_transition",
       "dataset": "macaque_NEFH",
       "patch": "macaque_NEFH_transition",
       "domain": "macaque",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PM1",
+      "stain": "NEFH",
+      "seg": "White+Gray+Transition"
     },
     {
       "id": "macaque_PV/macaque_PV_WM_1",
       "dataset": "macaque_PV",
       "patch": "macaque_PV_WM_1",
       "domain": "macaque",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PM1",
+      "stain": "PV",
+      "seg": "WM1"
     },
     {
       "id": "macaque_PV/macaque_PV_WM_2",
       "dataset": "macaque_PV",
       "patch": "macaque_PV_WM_2",
       "domain": "macaque",
-      "split": "calibration"
+      "split": "calibration",
+      "subject": "PM1",
+      "stain": "PV",
+      "seg": "WM2"
     },
     {
       "id": "macaque_PV/macaque_PV_White-Gray_Transition",
       "dataset": "macaque_PV",
       "patch": "macaque_PV_White-Gray_Transition",
       "domain": "macaque",
-      "split": "heldout"
+      "split": "heldout",
+      "subject": "PM1",
+      "stain": "PV",
+      "seg": "White+Gray+Transition"
     }
   ],
   "methods": {

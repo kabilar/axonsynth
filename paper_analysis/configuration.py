@@ -120,6 +120,39 @@ EXPECTED_PATCH_RECORDS = (
 )
 EXPECTED_PATCH_IDS = tuple(record[0] for record in EXPECTED_PATCH_RECORDS)
 
+# BIDS entities (subject, stain, seg) that name each patch's raw and
+# ground-truth files in the public Dandiset, e.g.
+# derivatives/micr/sub-PH1/sub-PH1_stain-NEFH_seg-GM_desc-raw_SPIM.nii.gz.
+# They are pinned so the config cannot pair a patch ID with another patch's data.
+EXPECTED_DANDISET_ENTITIES: Mapping[str, tuple[str, str, str]] = MappingProxyType(
+    {
+        "human_NEFH/Human_NEFH_GM": ("PH1", "NEFH", "GM"),
+        "human_NEFH/Human_NEFH_WM": ("PH1", "NEFH", "WM"),
+        "human_NEFH/Human_NEFH_transition": ("PH1", "NEFH", "White+Gray+Transition"),
+        "human_NEFL/human_NEFL_GM_1": ("PH1", "NEFL", "GM1"),
+        "human_NEFL/human_NEFL_GM_2": ("PH1", "NEFL", "GM2"),
+        "human_NEFL/human_NEFL_White-Gray_Transition": (
+            "PH1",
+            "NEFL",
+            "White+Gray+Transition",
+        ),
+        "macaque_NEFH/macaque_NEFH_GM": ("PM1", "NEFH", "GM"),
+        "macaque_NEFH/macaque_NEFH_WM": ("PM1", "NEFH", "WM"),
+        "macaque_NEFH/macaque_NEFH_transition": (
+            "PM1",
+            "NEFH",
+            "White+Gray+Transition",
+        ),
+        "macaque_PV/macaque_PV_WM_1": ("PM1", "PV", "WM1"),
+        "macaque_PV/macaque_PV_WM_2": ("PM1", "PV", "WM2"),
+        "macaque_PV/macaque_PV_White-Gray_Transition": (
+            "PM1",
+            "PV",
+            "White+Gray+Transition",
+        ),
+    }
+)
+
 FIXED_THRESHOLDS: Mapping[str, Mapping[str, float]] = MappingProxyType(
     {
         "three_class_v2": MappingProxyType({"human": 0.94, "macaque": 0.88}),
@@ -223,9 +256,21 @@ REQUIRED_PATH_TEMPLATES = (
 )
 
 _DATA_TEMPLATES = {"raw_patch", "target_mask"}
-_FORMAT_FIELDS = {"dataset", "patch", "patch_id", "domain", "split", "method"}
+_PATCH_FORMAT_FIELDS = {
+    "dataset",
+    "patch",
+    "patch_id",
+    "domain",
+    "split",
+    "subject",
+    "stain",
+    "seg",
+}
+_FORMAT_FIELDS = _PATCH_FORMAT_FIELDS | {"method"}
 _ENVIRONMENT_TOKEN = re.compile(r"\$\{([^{}]+)\}")
 _PATH_COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+# BIDS labels are alphanumeric; the Dandiset also uses "+" in seg labels.
+_BIDS_LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9+]*")
 
 
 @dataclass(frozen=True)
@@ -237,6 +282,9 @@ class PatchConfig:
     patch: str
     domain: str
     split: str
+    subject: str
+    stain: str
+    seg: str
 
 
 @dataclass(frozen=True)
@@ -323,6 +371,9 @@ class PipelineConfig:
                     "patch_id": patch_config.id,
                     "domain": patch_config.domain,
                     "split": patch_config.split,
+                    "subject": patch_config.subject,
+                    "stain": patch_config.stain,
+                    "seg": patch_config.seg,
                 }
             )
         if method_config is not None:
@@ -467,7 +518,9 @@ def _validate_patches(document: Mapping[str, Any]) -> tuple[PatchConfig, ...]:
 
     records: list[tuple[str, str, str, str, str]] = []
     patches: list[PatchConfig] = []
-    expected_keys = ("id", "dataset", "patch", "domain", "split")
+    record_keys = ("id", "dataset", "patch", "domain", "split")
+    entity_keys = ("subject", "stain", "seg")
+    expected_keys = record_keys + entity_keys
     for index, raw_patch in enumerate(raw_patches):
         if not isinstance(raw_patch, Mapping):
             raise ValueError(f"Patch at index {index} must be a mapping")
@@ -477,10 +530,22 @@ def _validate_patches(document: Mapping[str, Any]) -> tuple[PatchConfig, ...]:
             )
         record = tuple(
             _required_nonempty_string(raw_patch, key, f"Patch at index {index}")
-            for key in ("id", "dataset", "patch", "domain", "split")
+            for key in record_keys
         )
+        entities = tuple(
+            _required_nonempty_string(raw_patch, key, f"Patch at index {index}")
+            for key in entity_keys
+        )
+        if not all(_BIDS_LABEL.fullmatch(label) for label in entities):
+            raise ValueError(
+                f"Patch at index {index} has an unsafe subject, stain, or seg label"
+            )
+        if entities != EXPECTED_DANDISET_ENTITIES.get(record[0]):
+            raise ValueError(
+                f"Patch {record[0]!r} does not map to its fixed Dandiset files"
+            )
         records.append(record)  # type: ignore[arg-type]
-        patches.append(PatchConfig(*record))
+        patches.append(PatchConfig(*record, *entities))
 
     if tuple(records) != EXPECTED_PATCH_RECORDS:
         raise ValueError("Config patches must exactly match the fixed 12-patch allowlist")
@@ -691,7 +756,7 @@ def load_pipeline_config(
             for _, field_name, _, _ in Formatter().parse(protected)
             if field_name is not None
         }
-        patch = patches[0] if fields & {"dataset", "patch", "patch_id", "domain", "split"} else None
+        patch = patches[0] if fields & _PATCH_FORMAT_FIELDS else None
         method = methods[METHOD_NAMES[0]] if "method" in fields else None
         config.path(name, patch=patch, method=method)
 
@@ -753,6 +818,7 @@ __all__ = [
     "DEFAULT_CONFIG_PATH",
     "DOMAINS",
     "EXPECTED_PATCH_IDS",
+    "EXPECTED_DANDISET_ENTITIES",
     "EXPECTED_PATCH_RECORDS",
     "FIXED_THRESHOLDS",
     "LEARNED_METHOD_NAMES",

@@ -8,6 +8,20 @@ LSM patches:
 - calibrated normalized-intensity threshold;
 - bright-only Frangi.
 
+## Data
+
+The 12 raw patches and ground-truth masks are published in the LSM Dandiset
+under BIDS names, e.g.
+`derivatives/micr/sub-PH1/sub-PH1_stain-NEFH_seg-GM_desc-raw_SPIM.nii.gz`
+and `..._desc-gt_SPIM.nii.gz`. Download the Dandiset and set `DATA_ROOT` to
+its root (the directory that contains `derivatives/`); no renaming is needed.
+Each patch in `config/lsm_12patch.json` lists the `subject`, `stain`, and
+`seg` entities of its files, so `human_NEFH/Human_NEFH_GM` reads
+`sub-PH1_stain-NEFH_seg-GM`. Patch IDs, output paths, and reported tables keep
+the paper's patch names.
+
+## Running
+
 Copy the exported path template in `config/site.example.env` to the ignored
 `config/site.env`, source that file, and submit the learned
 inference and baseline arrays. After both arrays complete, run the evaluation,

@@ -165,3 +165,53 @@ def test_evaluation_rejects_output_changed_after_metadata(tmp_path, monkeypatch)
 
     with pytest.raises(ValueError, match="Saved mask does not match"):
         evaluate_lsm(config_path)
+
+
+def test_data_paths_use_dandiset_bids_names(tmp_path, monkeypatch):
+    config, _ = setup_canonical_inputs(tmp_path, monkeypatch)
+    micr = config.data_root / "derivatives" / "micr"
+    expected = {
+        "human_NEFH/Human_NEFH_GM": "sub-PH1/sub-PH1_stain-NEFH_seg-GM",
+        "human_NEFH/Human_NEFH_WM": "sub-PH1/sub-PH1_stain-NEFH_seg-WM",
+        "human_NEFH/Human_NEFH_transition": (
+            "sub-PH1/sub-PH1_stain-NEFH_seg-White+Gray+Transition"
+        ),
+        "human_NEFL/human_NEFL_GM_1": "sub-PH1/sub-PH1_stain-NEFL_seg-GM1",
+        "human_NEFL/human_NEFL_GM_2": "sub-PH1/sub-PH1_stain-NEFL_seg-GM2",
+        "human_NEFL/human_NEFL_White-Gray_Transition": (
+            "sub-PH1/sub-PH1_stain-NEFL_seg-White+Gray+Transition"
+        ),
+        "macaque_NEFH/macaque_NEFH_GM": "sub-PM1/sub-PM1_stain-NEFH_seg-GM",
+        "macaque_NEFH/macaque_NEFH_WM": "sub-PM1/sub-PM1_stain-NEFH_seg-WM",
+        "macaque_NEFH/macaque_NEFH_transition": (
+            "sub-PM1/sub-PM1_stain-NEFH_seg-White+Gray+Transition"
+        ),
+        "macaque_PV/macaque_PV_WM_1": "sub-PM1/sub-PM1_stain-PV_seg-WM1",
+        "macaque_PV/macaque_PV_WM_2": "sub-PM1/sub-PM1_stain-PV_seg-WM2",
+        "macaque_PV/macaque_PV_White-Gray_Transition": (
+            "sub-PM1/sub-PM1_stain-PV_seg-White+Gray+Transition"
+        ),
+    }
+    assert [patch.id for patch in config.patches] == list(expected)
+    for patch in config.patches:
+        stem = micr / expected[patch.id]
+        assert config.path("raw_patch", patch=patch) == Path(f"{stem}_desc-raw_SPIM.nii.gz")
+        assert config.path("target_mask", patch=patch) == Path(f"{stem}_desc-gt_SPIM.nii.gz")
+
+
+def test_configuration_rejects_patch_mapped_to_wrong_dandiset_file(tmp_path, monkeypatch):
+    _, config_path = setup_canonical_inputs(tmp_path, monkeypatch)
+    document = json.loads(config_path.read_text(encoding="utf-8"))
+    document["patches"][0]["seg"] = "WM"
+    config_path.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(ValueError, match="does not map to its fixed Dandiset files"):
+        load_pipeline_config(config_path)
+
+
+def test_configuration_rejects_unsafe_bids_label(tmp_path, monkeypatch):
+    _, config_path = setup_canonical_inputs(tmp_path, monkeypatch)
+    document = json.loads(config_path.read_text(encoding="utf-8"))
+    document["patches"][0]["subject"] = "../PH1"
+    config_path.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(ValueError, match="unsafe subject, stain, or seg label"):
+        load_pipeline_config(config_path)
